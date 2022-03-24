@@ -70,4 +70,4 @@ Finally, edit the ```PressurePlate``` class with ```pressureplate/environment.py
 
 For detailed instructions, please refer to the docstring within ```pressureplate/assets.py```.
 
-
+Inspired from: https://github.com/uoe-agents/pressureplate
