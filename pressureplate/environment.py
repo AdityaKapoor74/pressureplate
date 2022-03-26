@@ -63,6 +63,7 @@ class PressurePlate(gym.Env):
         self.grid_size = (height, width)
         self.n_agents = n_agents
         self.sensor_range = sensor_range
+        self.collision_pen = 0.0
 
         self.grid = np.zeros((5, *self.grid_size))
 
@@ -105,7 +106,7 @@ class PressurePlate(gym.Env):
     def step(self, actions):
         """obs, reward, done info"""
         # np.random.shuffle(self.agent_order)
-
+        penalty_for_collision = [0.0]*self.n_agents
         for i in self.agent_order:
             proposed_pos = [self.agents[i].x, self.agents[i].y]
 
@@ -113,21 +114,29 @@ class PressurePlate(gym.Env):
                 proposed_pos[1] -= 1
                 if not self._detect_collision(proposed_pos):
                     self.agents[i].y -= 1
+                else:
+                    penalty_for_collision[i] = self.collision_pen
 
             elif actions[i] == 1:
                 proposed_pos[1] += 1
                 if not self._detect_collision(proposed_pos):
                     self.agents[i].y += 1
+                else:
+                    penalty_for_collision[i] = self.collision_pen
 
             elif actions[i] == 2:
                 proposed_pos[0] -= 1
                 if not self._detect_collision(proposed_pos):
                     self.agents[i].x -= 1
+                else:
+                    penalty_for_collision[i] = self.collision_pen
 
             elif actions[i] == 3:
                 proposed_pos[0] += 1
                 if not self._detect_collision(proposed_pos):
                     self.agents[i].x += 1
+                else:
+                    penalty_for_collision[i] = self.collision_pen
 
             else:
                 # NOOP
@@ -166,7 +175,7 @@ class PressurePlate(gym.Env):
 
         info = {"room_boundaries": self.room_boundaries}
 
-        return self._get_obs(), self._get_rewards(), [self.goal.achieved] * self.n_agents, info
+        return self._get_obs(), self._get_rewards(penalty_for_collision), [self.goal.achieved] * self.n_agents, info
 
     def _detect_collision(self, proposed_position):
         """Need to check for collision with (1) grid edge, (2) walls, (3) closed doors (4) other agents"""
@@ -210,7 +219,7 @@ class PressurePlate(gym.Env):
                                     self.layout['AGENTS'][self.agent_order[i]][1]))
             self.grid[_LAYER_AGENTS,
                     self.layout['AGENTS'][self.agent_order[i]][1],
-                    self.layout['AGENTS'][self.agent_order[i]][0]] = 1
+                    self.layout['AGENTS'][self.agent_order[i]][0]] = i+1
 
         # Walls
         self.walls = []
@@ -229,20 +238,21 @@ class PressurePlate(gym.Env):
         self.plates = []
         for i, plate in enumerate(self.layout['PLATES']):
             self.plates.append(Plate(i, plate[0], plate[1]))
-            self.grid[_LAYER_PLATES, plate[1], plate[0]] = 1
+            self.grid[_LAYER_PLATES, plate[1], plate[0]] = i+1
 
         # Goal
         self.goal = []
         self.goal = Goal('goal', self.layout['GOAL'][0][0], self.layout['GOAL'][0][1])
-        self.grid[_LAYER_GOAL, self.layout['GOAL'][0][1], self.layout['GOAL'][0][0]] = 1
+        self.grid[_LAYER_GOAL, self.layout['GOAL'][0][1], self.layout['GOAL'][0][0]] = self.n_agents
 
         return self._get_obs()
 
     def _get_obs(self):
         obs = []
         agent_global_positions = []
+        agent_ids = []
 
-        for agent in self.agents:
+        for i,agent in enumerate(self.agents):
             x, y = agent.x, agent.y
             pad = self.sensor_range // 2
 
@@ -307,10 +317,13 @@ class PressurePlate(gym.Env):
 
             # Concat
             # obs.append(np.concatenate((_agents, _walls, _plates, _doors, _goal), axis=0, dtype=np.float64))
-            obs.append(np.stack((_agents, _walls, _plates, _doors, _goal), axis=0))
+            obs.append(np.stack((_agents, _walls, _doors, _plates, _goal), axis=0))
             agent_global_positions.append(np.array([x, y]))
+            agent_id = [0]*self.n_agents
+            agent_id[i] = 1
+            agent_ids.append(agent_id)
 
-        return np.array(obs), np.array(agent_global_positions)
+        return np.array(obs), np.array(agent_global_positions), np.array(agent_ids)
 
     def _get_flat_grid(self):
         grid = np.zeros(self.grid_size)
@@ -339,7 +352,7 @@ class PressurePlate(gym.Env):
 
         return grid
 
-    def _get_rewards(self):
+    def _get_rewards(self, penalty_for_collion):
         rewards = []
 
         # The last agent's desired location is the goal instead of a plate, so we use an if/else block
@@ -358,12 +371,14 @@ class PressurePlate(gym.Env):
             if i == curr_room:
                 reward = - np.linalg.norm((np.array(plate_loc) - np.array(agent_loc)), 1) / self.max_dist
             else:
-                reward = -len(self.room_boundaries)+1 + curr_room + (len(self.room_boundaries)-1 - i)
+                reward = (-len(self.room_boundaries)+1 + curr_room + (len(self.room_boundaries)-1 - i)) / 10.0
 
             if agent_loc == plate_loc:
-                reward = 10.0
+                reward = 1.0
+
+            reward += penalty_for_collion[i]
             
-            rewards.append(reward/10.0)
+            rewards.append(reward)
 
         return rewards
 
