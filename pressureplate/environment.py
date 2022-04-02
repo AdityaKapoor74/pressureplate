@@ -164,8 +164,8 @@ class PressurePlate(gym.Env):
 
         # update the agent positions
         self.grid[_LAYER_AGENTS] = np.zeros(self.grid_size)
-        for agent in self.agents:
-            self.grid[_LAYER_AGENTS][agent.y][agent.x] = 1
+        for i,agent in enumerate(self.agents):
+            self.grid[_LAYER_AGENTS][agent.y][agent.x] = i+1
         self.grid[_LAYER_DOORS] = np.zeros(self.grid_size)
         for i,plate in enumerate(self.plates):
             if not plate.pressed:
