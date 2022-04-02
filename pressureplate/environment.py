@@ -106,6 +106,7 @@ class PressurePlate(gym.Env):
     def step(self, actions):
         """obs, reward, done info"""
         # np.random.shuffle(self.agent_order)
+        goal_reached = [False]*self.n_agents
         penalty_for_collision = [0.0]*self.n_agents
         for i in self.agent_order:
             proposed_pos = [self.agents[i].x, self.agents[i].y]
@@ -143,6 +144,8 @@ class PressurePlate(gym.Env):
                 pass
 
         for i, plate in enumerate(self.plates):
+            if plate.pressed:
+                goal_reached[plate.id] = True
             if not plate.pressed:
                 if [plate.x, plate.y] == [self.agents[plate.id].x, self.agents[plate.id].y]:
                     plate.pressed = True
@@ -161,6 +164,9 @@ class PressurePlate(gym.Env):
 
         if got_goal:
             self.goal.achieved = True
+            goal_reached[-1] = True
+        else:
+            goal_reached[-1] = False
 
         # update the agent positions
         self.grid[_LAYER_AGENTS] = np.zeros(self.grid_size)
@@ -173,9 +179,9 @@ class PressurePlate(gym.Env):
                     self.grid[_LAYER_DOORS, y, x] = 1
                 # self.grid[_LAYER_DOORS][self.doors[plate.id].y][self.doors[plate.id].x] = 1
 
-        info = {"room_boundaries": self.room_boundaries}
+        info = {"room_boundaries": self.room_boundaries, "goal_reached": goal_reached}
 
-        return self._get_obs(), self._get_rewards(penalty_for_collision), [self.goal.achieved] * self.n_agents, info
+        return self._get_obs(), self._get_rewards(penalty_for_collision), goal_reached, info
 
     def _detect_collision(self, proposed_position):
         """Need to check for collision with (1) grid edge, (2) walls, (3) closed doors (4) other agents"""
