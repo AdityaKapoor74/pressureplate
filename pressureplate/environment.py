@@ -370,14 +370,17 @@ class PressurePlate(gym.Env):
             else:
                 plate_loc = self.plates[i].x, self.plates[i].y
 
-            curr_room = self._get_curr_room_reward(agent.y)
-
             agent_loc = agent.x, agent.y
+            
+            # curr_room = self._get_curr_room_reward(agent.y)
 
-            if i == curr_room:
-                reward = - np.linalg.norm((np.array(plate_loc) - np.array(agent_loc)), 1) / self.max_dist
-            else:
-                reward = (-len(self.room_boundaries)+1 + curr_room + (len(self.room_boundaries)-1 - i)) / 10.0
+            # if i == curr_room:
+            #     reward = - np.linalg.norm((np.array(plate_loc) - np.array(agent_loc)), 1) / self.max_dist
+            # else:
+            #     reward = (-len(self.room_boundaries)+1 + curr_room + (len(self.room_boundaries)-1 - i)) / 10.0
+
+            # reward based on distance from plate
+            reward = - np.linalg.norm((np.array(plate_loc) - np.array(agent_loc)), 1) / self.max_dist
 
             if agent_loc == plate_loc:
                 reward = 1.0
