@@ -255,8 +255,8 @@ class PressurePlate(gym.Env):
 
     def _get_obs(self):
         obs = []
-        agent_global_positions = []
-        agent_ids = []
+        # agent_global_positions = []
+        # agent_ids = []
 
         for i,agent in enumerate(self.agents):
             x, y = agent.x, agent.y
@@ -283,7 +283,7 @@ class PressurePlate(gym.Env):
             _agents = np.concatenate((_agents, np.zeros((_agents.shape[0], x_right_padding))), axis=1)
             _agents = np.concatenate((np.zeros((y_up_padding, _agents.shape[1])), _agents), axis=0)
             _agents = np.concatenate((_agents, np.zeros((y_down_padding, _agents.shape[1]))), axis=0)
-            # _agents = _agents.reshape(-1)
+            _agents = _agents.reshape(-1)
 
             # Walls
             _walls = self.grid[_LAYER_WALLS, y_up:y_down + 1, x_left:x_right + 1]
@@ -292,7 +292,7 @@ class PressurePlate(gym.Env):
             _walls = np.concatenate((_walls, np.ones((_walls.shape[0], x_right_padding))), axis=1)
             _walls = np.concatenate((np.ones((y_up_padding, _walls.shape[1])), _walls), axis=0)
             _walls = np.concatenate((_walls, np.ones((y_down_padding, _walls.shape[1]))), axis=0)
-            # _walls = _walls.reshape(-1)
+            _walls = _walls.reshape(-1)
 
             # Doors
             _doors = self.grid[_LAYER_DOORS, y_up:y_down + 1, x_left:x_right + 1]
@@ -301,7 +301,7 @@ class PressurePlate(gym.Env):
             _doors = np.concatenate((_doors, np.zeros((_doors.shape[0], x_right_padding))), axis=1)
             _doors = np.concatenate((np.zeros((y_up_padding, _doors.shape[1])), _doors), axis=0)
             _doors = np.concatenate((_doors, np.zeros((y_down_padding, _doors.shape[1]))), axis=0)
-            # _doors = _doors.reshape(-1)
+            _doors = _doors.reshape(-1)
 
             # Plate
             _plates = self.grid[_LAYER_PLATES, y_up:y_down + 1, x_left:x_right + 1]
@@ -310,7 +310,7 @@ class PressurePlate(gym.Env):
             _plates = np.concatenate((_plates, np.zeros((_plates.shape[0], x_right_padding))), axis=1)
             _plates = np.concatenate((np.zeros((y_up_padding, _plates.shape[1])), _plates), axis=0)
             _plates = np.concatenate((_plates, np.zeros((y_down_padding, _plates.shape[1]))), axis=0)
-            # _plates = _plates.reshape(-1)
+            _plates = _plates.reshape(-1)
 
             # Goal
             _goal = self.grid[_LAYER_GOAL, y_up:y_down + 1, x_left:x_right + 1]
@@ -319,17 +319,18 @@ class PressurePlate(gym.Env):
             _goal = np.concatenate((_goal, np.zeros((_goal.shape[0], x_right_padding))), axis=1)
             _goal = np.concatenate((np.zeros((y_up_padding, _goal.shape[1])), _goal), axis=0)
             _goal = np.concatenate((_goal, np.zeros((y_down_padding, _goal.shape[1]))), axis=0)
-            # _goal = _goal.reshape(-1)
+            _goal = _goal.reshape(-1)
 
             # Concat
             # obs.append(np.concatenate((_agents, _walls, _plates, _doors, _goal), axis=0, dtype=np.float64))
-            obs.append(np.stack((_agents, _walls, _doors, _plates, _goal), axis=0))
-            agent_global_positions.append(np.array([x, y]))
+            # obs.append(np.stack((_agents, _walls, _doors, _plates, _goal), axis=0))
+            # agent_global_positions.append(np.array([x, y]))
             agent_id = [0]*self.n_agents
             agent_id[i] = 1
-            agent_ids.append(agent_id)
+            # agent_ids.append(agent_id)
+            obs.append(np.concatenate((_agents, _walls, _plates, _doors, _goal, np.array([x, y]), np.array(agent_id)), axis=0))
 
-        return np.array(obs), np.array(agent_global_positions), np.array(agent_ids)
+        return np.array(obs, dtype=np.float32) #np.array(obs), np.array(agent_global_positions), np.array(agent_ids)
 
     def _get_flat_grid(self):
         grid = np.zeros(self.grid_size)

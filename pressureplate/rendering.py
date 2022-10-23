@@ -323,11 +323,13 @@ class Viewer:
                     self._draw_badge(door.y[j], door.x[j], door.id)
 
     def _draw_badge(self, row, col, id):
-        resolution = 6
-        radius = self.grid_size / 5
+        resolution = 15
+        radius = self.grid_size / 2
 
-        badge_x = col * self.grid_size + (3 / 4) * self.grid_size
-        badge_y = self.height - self.grid_size * (row + 1) + (1 / 4) * self.grid_size
+        # badge_x = col * self.grid_size + (3 / 4) * self.grid_size
+        badge_x = col * self.grid_size + (1 / 2) * self.grid_size
+        # badge_y = self.height - self.grid_size * (row + 1) + (1 / 4) * self.grid_size
+        badge_y = self.height - self.grid_size * (row + 1) + (1 / 2) * self.grid_size
 
         # make a circle
         verts = []
@@ -336,15 +338,16 @@ class Viewer:
             x = radius * math.cos(angle) + badge_x
             y = radius * math.sin(angle) + badge_y
             verts += [x, y]
-        circle = pyglet.graphics.vertex_list(resolution, ("v2f", verts))
-        glColor3ub(*_BLACK)
-        circle.draw(GL_POLYGON)
-        glColor3ub(*_WHITE)
-        circle.draw(GL_LINE_LOOP)
+        # circle = pyglet.graphics.vertex_list(resolution, ("v2f", verts))
+        # glColor3ub(*_BLACK)
+        # circle.draw(GL_POLYGON)
+        # glColor3ub(*_WHITE)
+        # circle.draw(GL_LINE_LOOP)
         label = pyglet.text.Label(
             str(id),
             font_name="Times New Roman",
-            font_size=12,
+            font_size=50,
+            color=(0,0,0,255),
             x=badge_x,
             y=badge_y + 2,
             anchor_x="center",
